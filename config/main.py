@@ -3307,6 +3307,56 @@ def fec(ctx, interface_name, interface_fec, verbose):
     clicommon.run_command(command, display_cmd=verbose)
 
 #
+# 'description' subgroup ('config interface description ...')
+#
+
+@interface.group(cls=clicommon.AbbreviationGroup)
+@click.pass_context
+def description(ctx):
+    """Add or remove interface description"""
+    pass
+
+#
+# 'set' subcommand
+#
+
+@description.command('set')
+@click.argument('interface_name', metavar='<interface_name>', required=True)
+@click.argument("description", metavar="<description>", required=True)
+@click.pass_context
+def set_description(ctx, interface_name, description):
+    """Set interface description"""
+    # Get the config_db connector
+    if len(description) > 200:
+        ctx.fail("Too long. Description has max length of 200")
+
+    config_db = ctx.obj['config_db']
+
+    if get_interface_table_name(interface_name) != "INTERFACE":
+        ctx.fail("{} is not valid Ethernet interface name.".format(interface_name))
+
+    if len(config_db.get_entry("PORT", interface_name)) == 0:
+        ctx.fail("Interface {} doesn't exist".format(interface_name))
+
+    config_db.mod_entry("PORT", interface_name, {"description": description})
+
+#
+# 'del' subcommand
+#
+
+@description.command('del')
+@click.argument('interface_names', metavar='<interface_name...>', nargs=-1, required=True)
+@click.pass_context
+def del_description(ctx, interface_names):
+    """Remove interface description"""
+    # Get the config_db connector
+    config_db = ctx.obj['config_db']
+
+    for interface_name in interface_names:
+        if len(config_db.get_entry("PORT", interface_name)) != 0:
+            config_db.mod_entry("PORT", interface_name, {"description": ""})
+
+#
 # 'ip' subgroup ('config interface ip ...')
 #
 
