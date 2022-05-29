@@ -14,7 +14,7 @@ def vlan():
 @clicommon.pass_db
 def brief(db, verbose):
     """Show all bridge information"""
-    header = ['VLAN ID', 'IP Address', 'Ports', 'Port Tagging', 'DHCP Helper Address', 'Proxy ARP']
+    header = ['VLAN ID', 'IP Address', 'Ports', 'Port Tagging', 'DHCP Helper Address', 'Proxy ARP', 'Description']
     body = []
 
     # Fetching data from config db for VLAN, VLAN_INTERFACE and VLAN_MEMBER
@@ -100,7 +100,11 @@ def brief(db, verbose):
         else:
             vlan_tagging = ','.replace(',', '\n').join((vlan_tagging_dict[key]))
         vlan_proxy_arp = vlan_proxy_arp_dict.get(key, "disabled")
-        body.append([key, ip_address, vlan_ports, vlan_tagging, dhcp_helpers, vlan_proxy_arp])
+        description = ""
+        vlan_key = "Vlan{}".format(key)
+        if vlan_key in vlan_dhcp_helper_data and 'description' in vlan_dhcp_helper_data[vlan_key]:
+          description = vlan_dhcp_helper_data[vlan_key]['description']
+        body.append([key, ip_address, vlan_ports, vlan_tagging, dhcp_helpers, vlan_proxy_arp, description])
     click.echo(tabulate(body, header, tablefmt="grid"))
 
 @vlan.command()
