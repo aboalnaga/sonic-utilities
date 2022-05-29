@@ -258,3 +258,39 @@ def del_vlan_dhcp_relay_destination(db, vid, dhcp_relay_destination_ip):
         clicommon.run_command("systemctl start dhcp_relay", display_cmd=False)
     except SystemExit as e:
         ctx.fail("Restart service dhcp_relay failed with error {}".format(e))
+
+@vlan.group(cls=clicommon.AbbreviationGroup)
+@click.pass_context
+def description(ctx):
+    """Add or remove vlan description"""
+    pass
+
+@description.command('set')
+@click.argument('vid', metavar='<vid>', required=True, type=int)
+@click.argument("description", metavar="<description>", required=True)
+@clicommon.pass_db
+def set_description(db, vid, description):
+    """Set vlan description"""
+
+    ctx = click.get_current_context()
+
+    if len(description) > 200:
+        ctx.fail("Too long. Description has max length of 200")
+
+    vlan = 'Vlan{}'.format(vid)
+    if not clicommon.check_if_vlanid_exist(db.cfgdb, vlan):
+        ctx.fail("{} does not exist".format(vlan))
+
+    db.cfgdb.mod_entry('VLAN', vlan, {'description': description})
+
+@description.command('del')
+@click.argument('vids', metavar='<vids>', nargs=-1, required=True, type=int)
+@clicommon.pass_db
+def del_description(db, vids):
+    """Remove vlan description"""
+
+    for vid in vids:
+
+      vlan = 'Vlan{}'.format(vid)
+      if clicommon.check_if_vlanid_exist(db.cfgdb, vlan):
+          db.cfgdb.mod_entry('VLAN', vlan, {'description': ''})
