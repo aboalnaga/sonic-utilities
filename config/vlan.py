@@ -261,6 +261,42 @@ def del_vlan_dhcp_relay_destination(db, vid, dhcp_relay_destination_ip):
 
 @vlan.group(cls=clicommon.AbbreviationGroup)
 @click.pass_context
+def name(ctx):
+    """Add or remove vlan name"""
+    pass
+
+@name.command('set')
+@click.argument('vid', metavar='<vid>', required=True, type=int)
+@click.argument("name", metavar="<name>", required=True)
+@clicommon.pass_db
+def set_name(db, vid, name):
+    """Set vlan name"""
+
+    ctx = click.get_current_context()
+
+    if len(name) > 50:
+        ctx.fail("Too long. name has max length of 50")
+
+    vlan = 'Vlan{}'.format(vid)
+    if not clicommon.check_if_vlanid_exist(db.cfgdb, vlan):
+        ctx.fail("{} does not exist".format(vlan))
+
+    db.cfgdb.mod_entry('VLAN', vlan, {'name': name})
+
+@name.command('del')
+@click.argument('vids', metavar='<vids>', nargs=-1, required=True, type=int)
+@clicommon.pass_db
+def del_name(db, vids):
+    """Remove vlan name"""
+
+    for vid in vids:
+
+      vlan = 'Vlan{}'.format(vid)
+      if clicommon.check_if_vlanid_exist(db.cfgdb, vlan):
+          db.cfgdb.mod_entry('VLAN', vlan, {'name': ''})
+
+@vlan.group(cls=clicommon.AbbreviationGroup)
+@click.pass_context
 def description(ctx):
     """Add or remove vlan description"""
     pass

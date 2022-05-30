@@ -14,7 +14,7 @@ def vlan():
 @clicommon.pass_db
 def brief(db, verbose):
     """Show all bridge information"""
-    header = ['VLAN ID', 'IP Address', 'Ports', 'Port Tagging', 'DHCP Helper Address', 'Proxy ARP', 'Description']
+    header = ['VLAN ID', 'NAME', 'IP Address', 'Ports', 'Port Tagging', 'DHCP Helper Address', 'Proxy ARP', 'Description']
     body = []
 
     # Fetching data from config db for VLAN, VLAN_INTERFACE and VLAN_MEMBER
@@ -104,7 +104,11 @@ def brief(db, verbose):
         vlan_key = "Vlan{}".format(key)
         if vlan_key in vlan_dhcp_helper_data and 'description' in vlan_dhcp_helper_data[vlan_key]:
           description = vlan_dhcp_helper_data[vlan_key]['description']
-        body.append([key, ip_address, vlan_ports, vlan_tagging, dhcp_helpers, vlan_proxy_arp, description])
+        name = ""
+        vlan_key = "Vlan{}".format(key)
+        if vlan_key in vlan_dhcp_helper_data and 'name' in vlan_dhcp_helper_data[vlan_key]:
+          name = vlan_dhcp_helper_data[vlan_key]['name']
+        body.append([key, name, ip_address, vlan_ports, vlan_tagging, dhcp_helpers, vlan_proxy_arp, description])
     click.echo(tabulate(body, header, tablefmt="grid"))
 
 @vlan.command()
@@ -138,10 +142,10 @@ def config(db):
                 members = [(k, '')]
             
             for vlan, member in natsorted(members):
-                r = [vlan, data[vlan]['vlanid'], get_iface_name_for_display(member), get_tagging_mode(vlan, member)]
+                r = [vlan, data[vlan]['vlanid'], data[vlan]['name'], get_iface_name_for_display(member), get_tagging_mode(vlan, member), data[vlan]['description']]
                 table.append(r)
 
         return table
 
-    header = ['Name', 'VID', 'Member', 'Mode']
+    header = ['Name', 'Name', 'VID', 'Member', 'Mode', 'Description']
     click.echo(tabulate(tablelize(keys, data), header))
